@@ -99,7 +99,7 @@ usersRouter.post("/login", async (req, res, next) => {
 
       res.cookie("accessToken", accessToken) // in production environment you should have sameSite: "none", secure: true
       res.cookie("refreshToken", refreshToken)
-      res.status(200).send({ "name": user.name, "surname": user.surname, "institutions": user.institutions.map(institution => (institution.name)) })
+      res.status(200).send({ "name": user.name, "surname": user.surname })
 
       // res.status(200).redirect(`http://localhost:3000?accessToken=${req.user.tokens.accessToken}&refreshToken=${req.user.tokens.refreshToken}`)
       // res.cookie("accessToken", req.user.tokens.accessToken, { httpOnly: true }) // in production environment you should have sameSite: "none", secure: true
