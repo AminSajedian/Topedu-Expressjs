@@ -16,6 +16,16 @@ institutionsRouter.get("/", JWTAuthMiddleware, adminOnly, async (req, res, next)
   }
 })
 
+institutionsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const institutions = await InstitutionModel.find().populate("users")
+    res.send(institutions)
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while getting institutions"))
+  }
+})
+
 // Admin and User can create a new Institution
 institutionsRouter.post("/", JWTAuthMiddleware, async (req, res, next) => {
   try {
