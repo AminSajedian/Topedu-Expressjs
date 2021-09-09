@@ -7,14 +7,29 @@ import UserModel from "../users/schema.js"
 
 const institutionsRouter = express.Router()
 
-institutionsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
+institutionsRouter.get("/me/:id", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const user = await UserModel.findById(req.user._id).populate("institutions")
-    res.send(user.institutions)
+    const id = req.params.id
+    const institution = await institutionModel.findById(id).populate("instructors").populate("learners").populate("owner")
+    if (institution) {
+      res.send(institution)
+    } else {
+      next(createError(404, `Institution ${req.params.id} not found`))
+    }
   } catch (error) {
-    next(error)
+    console.log(error)
+    next(createError(500, "An error occurred while getting institution"))
   }
 })
+
+// institutionsRouter.get("/me/:id", JWTAuthMiddleware, async (req, res, next) => {
+//   try {
+//     const user = await UserModel.findById(req.user._id).populate("institutions")
+//     res.send(user.institutions)
+//   } catch (error) {
+//     next(error)
+//   }
+// })
 
 // institutionsRouter.post("/me", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
@@ -83,20 +98,7 @@ institutionsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
 //   }
 // })
 
-// institutionsRouter.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     const id = req.params.id
-//     const institution = await institutionModel.findById(id).populate("users")
-//     if (institution) {
-//       res.send(institution)
-//     } else {
-//       next(createError(404, `Institution ${req.params.id} not found`))
-//     }
-//   } catch (error) {
-//     console.log(error)
-//     next(createError(500, "An error occurred while getting institution"))
-//   }
-// })
+
 
 // institutionsRouter.put("/:id", JWTAuthMiddleware, async (req, res, next) => {
 //   try {

@@ -4,7 +4,6 @@ import { JWTAuthMiddleware } from '../../auth/middlewares.js'
 import { adminOnly } from '../../auth/admin.js'
 import { JWTAuthenticate, refreshTokens } from "../../auth/tools.js"
 
-
 import createError from "http-errors"
 
 const usersRouter = express.Router()
