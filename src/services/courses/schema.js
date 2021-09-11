@@ -4,16 +4,13 @@ const { Schema, model } = mongoose
 
 const CourseSchema = new Schema(
   {
-    // category: { type: String, required: true, },
     title: { type: String, required: true, },
     cover: { type: String, required: true, default: "https://picsum.photos/640/360" },
-    // readTime: {
-    //   value: { type: Number, required: true, },
-    //   unit: { type: String, required: true, },
-    // },
-    users: [{ type: Schema.Types.ObjectId, required: true, ref: "User" }],
     content: { type: String, required: false, },
-    // comments: [ { comment: String, rate: Number, date: Date, }, ],
+    owner: { type: Schema.Types.ObjectId, required: true, ref: "User" },
+    instructors: [{ type: Schema.Types.ObjectId, required: false, ref: "User" }],
+    learners: [{ type: Schema.Types.ObjectId, required: false, ref: "User" }],
+    assistants: [{ type: Schema.Types.ObjectId, required: false, ref: "User" }],
   },
   { timestamps: true }
 )

@@ -7,10 +7,10 @@ import UserModel from "../users/schema.js"
 
 const institutionsRouter = express.Router()
 
-institutionsRouter.get("/me/:id", JWTAuthMiddleware, async (req, res, next) => {
+institutionsRouter.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const id = req.params.id
-    const institution = await institutionModel.findById(id).populate("instructors").populate("learners").populate("owner")
+    const institution = await institutionModel.findById(id).populate("owner").populate("instructors").populate("learners").populate("assistants").populate("courses")
     if (institution) {
       res.send(institution)
     } else {

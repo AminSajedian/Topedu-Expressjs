@@ -4,8 +4,9 @@ import listEndpoints from "express-list-endpoints"
 import mongoose from "mongoose"
 import cookieParser from 'cookie-parser'
 
-import institutionsRouter from "./services/institutions/index.js"
 import usersRouter from "./services/users/index.js"
+import institutionsRouter from "./services/institutions/index.js"
+import coursesRouter from "./services/courses/index.js"
 
 import { forbiddenHandler, notFoundErrorHandler, badRequestErrorHandler, catchAllErrorHandler, unAuthorizedHandler } from "./errorHandlers.js"
 
@@ -44,8 +45,9 @@ server.use(cors(corsOptions))
 
 // ******** ROUTES ************
 
-server.use("/institutions", institutionsRouter)
 server.use("/users", usersRouter)
+server.use("/institutions", institutionsRouter)
+server.use("/courses", coursesRouter)
 
 // ******** ERROR MIDDLEWARES ************
 
