@@ -30,7 +30,12 @@ coursesRouter.post("/:insId", JWTAuthMiddleware, async (req, res, next) => {
 coursesRouter.get("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const course = await CourseModel.findById(req.params.courseId).populate("instructors").populate("learners").populate("owner")
-    res.send(course)
+    if (course) {
+      res.send(course)
+    } else {
+      res.status(404).send(`Course ${req.params.courseId} not found`)
+      next(createError(404, `Course ${req.params.id} not found`))
+    }
   } catch (error) {
     console.log(error)
     next(createError(500, "An error occurred while getting courses"))
