@@ -42,6 +42,23 @@ coursesRouter.get("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 
+coursesRouter.put("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const course = await CourseModel.findByIdAndUpdate(req.params.courseId, req.body, {
+      runValidators: true,
+      new: true,
+    })
+    if (course) {
+      res.send(course)
+    } else {
+      next(createError(404, `Course ${req.params.courseId} not found`))
+    }
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while modifying course"))
+  }
+})
+
 // coursesRouter.get("/me/stories", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
 //     console.log('req.user._id:', req.user._id)
@@ -68,22 +85,7 @@ coursesRouter.get("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
 //   }
 // })
 
-// coursesRouter.put("/:id", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     const course = await CourseModel.findByIdAndUpdate(req.params.id, req.body, {
-//       runValidators: true,
-//       new: true,
-//     })
-//     if (course) {
-//       res.send(course)
-//     } else {
-//       next(createError(404, `Course ${req.params.id} not found`))
-//     }
-//   } catch (error) {
-//     console.log(error)
-//     next(createError(500, "An error occurred while modifying course"))
-//   }
-// })
+
 
 // coursesRouter.delete("/:id", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
