@@ -59,6 +59,20 @@ coursesRouter.put("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 
+coursesRouter.delete("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const course = await CourseModel.findByIdAndDelete(req.params.courseId)
+    if (course) {
+      res.status(204).send()
+    } else {
+      next(createError(404, `Course with ID ${req.params.courseId} not found`))
+    }
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while deleting course"))
+  }
+})
+
 // coursesRouter.get("/me/stories", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
 //     console.log('req.user._id:', req.user._id)
@@ -87,18 +101,6 @@ coursesRouter.put("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
 
 
 
-// coursesRouter.delete("/:id", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     const course = await CourseModel.findByIdAndDelete(req.params.id)
-//     if (course) {
-//       res.status(204).send()
-//     } else {
-//       next(createError(404, `Course with ID ${req.params.id} not found`))
-//     }
-//   } catch (error) {
-//     console.log(error)
-//     next(createError(500, "An error occurred while deleting course"))
-//   }
-// })
+
 
 export default coursesRouter
