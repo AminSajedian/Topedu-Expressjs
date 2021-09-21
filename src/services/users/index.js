@@ -115,7 +115,6 @@ usersRouter.post("/login", async (req, res, next) => {
 usersRouter.post("/refreshToken", async (req, res, next) => {
   try {
     // actual refresh token is coming from req.cookies
-
     // 1. Check the validity and integrity of the actual refresh token, if everything is ok we are generating a new pair of access + refresh tokens
     const { newAccessToken, newRefreshToken } = await refreshTokens(req.cookies.refreshToken)
     // 2. Send back tokens as response

@@ -34,7 +34,7 @@ export const verifyToken = token =>
 
 const generateRefreshJWT = payload =>
   new Promise((resolve, reject) =>
-    jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "1 day" }, (err, token) => {
+    jwt.sign(payload, process.env.JWT_REFRESH_SECRET, { expiresIn: "2 day" }, (err, token) => {
       if (err) reject(err)
 
       resolve(token)

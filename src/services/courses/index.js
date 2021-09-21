@@ -33,8 +33,7 @@ coursesRouter.get("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
     if (course) {
       res.send(course)
     } else {
-      res.status(404).send(`Course ${req.params.courseId} not found`)
-      next(createError(404, `Course ${req.params.id} not found`))
+      next(createError(404, `Course ${req.params.courseId} not found`))
     }
   } catch (error) {
     console.log(error)
