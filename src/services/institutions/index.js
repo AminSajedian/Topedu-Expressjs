@@ -7,13 +7,45 @@ import UserModel from "../users/schema.js"
 
 const institutionsRouter = express.Router()
 
-institutionsRouter.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
+institutionsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const id = req.params.id
-    const institution = await institutionModel.findById(id).populate("owner").populate("instructors").populate("learners").populate("assistants").populate("courses")
-    if (institution) {
-      res.send(institution)
-    } else {
+    const userAndInstitutions = await UserModel.findById(req.user._id).populate("institutions")
+    const institutionsNamesAndIds = userAndInstitutions.institutions.map((institution) => {
+      return ({ "name": institution.name, "_id": institution._id })
+    })
+    res.send(institutionsNamesAndIds)
+  } catch (error) {
+    next(error)
+  }
+})
+
+// next(createError(401, "Forbidden"))
+// const institutionForOwner = await institutionModel.findById(institutionId).populate("owner").populate("instructors").populate("learners").populate("assistants").populate("courses")
+
+institutionsRouter.get("/:institutionId/courses", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const institutionWithCourses = await institutionModel.findById(req.params.institutionId).populate("courses")
+    const courses = institutionWithCourses.courses
+
+    // get Courses of Institution for owner
+    if (req.user._id.toString() === institutionWithCourses.owner.toString()) {
+      res.send({ "courses": courses, "userType": "owner" })
+    }
+    // get Courses of Institution for instructor 
+    else if (institutionWithCourses.instructors.find(instructor => instructor.toString() === req.user._id.toString())) {
+      res.send({ "courses": courses, "userType": "instructor" })
+    }
+    // get Courses of Institution for assistant 
+    else if (institutionWithCourses.assistants.find(assistant => assistant.toString() === req.user._id.toString())) {
+      const coursesForAssistant = courses.filter((course) => { return (course.assistants.find(assistant => assistant.toString() === req.user._id.toString())) })
+      res.send({ "courses": coursesForAssistant, "userType": "assistant" })
+    }
+    // get Courses of Institution for learner 
+    else if (institutionWithCourses.learners.find(learner => learner.toString() === req.user._id.toString())) {
+      const coursesForLearner = courses.filter((course) => { return (course.learners.find(learner => learner.toString() === req.user._id.toString())) })
+      res.send({ "courses": coursesForLearner, "userType": "learner" })
+    }
+    else {
       next(createError(404, `Institution ${req.params.id} not found`))
     }
   } catch (error) {

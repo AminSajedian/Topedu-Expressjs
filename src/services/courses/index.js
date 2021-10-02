@@ -4,6 +4,7 @@ import { JWTAuthMiddleware } from '../../auth/middlewares.js'
 import { adminOnly } from '../../auth/admin.js'
 import CourseModel from "./schema.js"
 import institutionModel from "../institutions/schema.js"
+import { fileUpload } from '../../utils/upload/index.js';
 
 const coursesRouter = express.Router()
 
@@ -29,7 +30,38 @@ coursesRouter.post("/:insId", JWTAuthMiddleware, async (req, res, next) => {
 
 coursesRouter.get("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const course = await CourseModel.findById(req.params.courseId).populate("instructors").populate("learners").populate("owner")
+    const course = await CourseModel.findById(req.params.courseId)
+    if (course) {
+      // get Courses for owner
+      if (course.owner.toString() === req.user._id.toString()) {
+        res.status(200).send({ "course": course, "userType": "owner" })
+      }
+      // get Courses for instructor 
+      else if (course.instructors.find(instructor => instructor.toString() === req.user._id.toString())) {
+        res.send({ "course": course, "userType": "instructor" })
+      }
+      // get Courses for assistant 
+      else if (course.assistants.find(assistant => assistant.toString() === req.user._id.toString())) {
+        // const courseForAssistant = course.filter((course) => { return (course.assistants.find(assistant => assistant.toString() === req.user._id.toString())) })
+        res.send({ "course": course, "userType": "assistant" })
+      }
+      // get Courses for learner 
+      else if (course.learners.find(learner => learner.toString() === req.user._id.toString())) {
+        // const courseForLearner = course.filter((course) => { return (course.learners.find(learner => learner.toString() === req.user._id.toString())) })
+        res.send({ "course": course, "userType": "learner" })
+      }
+    } else {
+      next(createError(404, `Course ${req.params.courseId} not found`))
+    }
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while getting courses"))
+  }
+})
+
+coursesRouter.get("/:courseId/participants", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const course = await CourseModel.findById(req.params.courseId).populate("owner").populate("instructors").populate("assistants").populate("learners")
     if (course) {
       res.send(course)
     } else {
@@ -62,15 +94,45 @@ coursesRouter.delete("/:courseId", JWTAuthMiddleware, async (req, res, next) => 
   try {
     const course = await CourseModel.findByIdAndDelete(req.params.courseId)
     if (course) {
-      res.status(204).send()
+      const institution = await institutionModel.findById(req.body.institutionId)
+      if (institution) {
+        const newCourses = institution.courses.filter((course) => { return (course.toString() !== req.params.courseId.toString()) })
+        institution.courses = newCourses
+        await institution.save()
+        res.status(204).send()
+      }
     } else {
       next(createError(404, `Course with ID ${req.params.courseId} not found`))
     }
   } catch (error) {
-    console.log(error)
-    next(createError(500, "An error occurred while deleting course"))
+    console.log(error.message);
+    next(error)
   }
 })
+
+coursesRouter.post("/upload/image", JWTAuthMiddleware, fileUpload.single("image"), async (req, res, next) => {
+  try {
+    res.send(req.file);
+  }
+  catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+});
+
+
+
+
+// coursesRouter.get("/", JWTAuthMiddleware, async (req, res, next) => {
+//   try {
+//     console.log('req.user._id:', req.user._id)
+//     const courses = await CourseModel.find({ users: req.user._id.toString() }).populate("users")
+//     res.send(courses)
+//   } catch (error) {
+//     console.log(error)
+//     next(createError(500, "An error occurred while getting courses"))
+//   }
+// })
 
 // coursesRouter.get("/me/stories", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
