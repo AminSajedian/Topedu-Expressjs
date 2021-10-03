@@ -5,12 +5,13 @@ import { adminOnly } from '../../auth/admin.js'
 import CourseModel from "./schema.js"
 import institutionModel from "../institutions/schema.js"
 import { fileUpload } from '../../utils/upload/index.js';
+import UserModel from "../users/schema.js"
 
 const coursesRouter = express.Router()
 
-coursesRouter.post("/:insId", JWTAuthMiddleware, async (req, res, next) => {
+coursesRouter.post("/:institutionId", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const institution = await institutionModel.findById(req.params.insId)
+    const institution = await institutionModel.findById(req.params.institutionId)
     if (institution) {
       const newCourse = new CourseModel(req.body)
       newCourse.owner = req.user._id
@@ -21,6 +22,78 @@ coursesRouter.post("/:insId", JWTAuthMiddleware, async (req, res, next) => {
       res.status(201).send(_id)
     } else {
       next(createError(404, `Institution ${req.params.id} not found`))
+    }
+  } catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+})
+
+coursesRouter.post("/:courseId/join/:notEnrolledUserId", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const institution = await institutionModel.findById(req.params.institutionId)
+    if (institution) {
+      const newCourse = new CourseModel(req.body)
+      newCourse.owner = req.user._id
+      const { _id } = await newCourse.save()
+      institution.courses.push(_id)
+      await institution.save()
+
+      res.status(201).send(_id)
+    } else {
+      next(createError(404, `Institution ${req.params.id} not found`))
+    }
+  } catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+})
+
+coursesRouter.post("/:courseId/invitation", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const course = await CourseModel.findById(req.params.courseId)
+    const institution = await institutionModel.findOne({ courses: req.params.courseId })
+    if (course) {
+      const user = await UserModel.findOne({ "email": req.body.email })
+      if (user) {
+        switch (req.body.role) {
+          case "Learner":
+            if (!(institution.learners.find(learner => learner.toString() === user._id.toString()))) { institution.learners.push(user._id); await institution.save(); }
+            if (!(course.learners.find(learner => learner.toString() === user._id.toString()))) { course.learners.push(user._id); await course.save(); }
+            break;
+          case "Assistant":
+            if (!(institution.assistants.find(assistant => assistant.toString() === user._id.toString()))) { institution.assistants.push(user._id); await institution.save(); }
+            if (!(course.assistants.find(assistant => assistant.toString() === user._id.toString()))) { course.assistants.push(user._id); await course.save(); }
+            break;
+          case "Instructor":
+            if (!(institution.instructors.find(instructor => instructor.toString() === user._id.toString()))) { institution.instructors.push(user._id); await institution.save(); }
+            if (!(course.instructors.find(instructor => instructor.toString() === user._id.toString()))) { course.instructors.push(user._id); await course.save(); }
+            break;
+          default: next(createError(400))
+        }
+        res.status(201).send({ message: "User added to the course" })
+      } else {
+        switch (req.body.role) {
+          case "Learner":
+            if (!(course.notEnrolledLearners.find(notEnrolledLearner => (notEnrolledLearner.email === req.body.email)))) { course.notEnrolledLearners.push(req.body); await course.save(); }
+            const newCourseForLearner = await CourseModel.findById(req.params.courseId)
+            const Learner = newCourseForLearner.notEnrolledLearners.find(notEnrolledLearner => (notEnrolledLearner.email === req.body.email))
+            res.status(201).send(Learner); break;
+          case "Assistant":
+            if (!(course.notEnrolledAssistants.find(notEnrolledAssistant => (notEnrolledAssistant.email === req.body.email)))) { course.notEnrolledAssistants.push(req.body); await course.save(); }
+            const newCourseForAssistant = await CourseModel.findById(req.params.courseId)
+            const Assistant = newCourseForAssistant.notEnrolledAssistants.find(notEnrolledAssistant => (notEnrolledAssistant.email === req.body.email))
+            res.status(201).send(Assistant); break;
+          case "Instructor":
+            if (!(course.notEnrolledInstructors.find(notEnrolledInstructor => (notEnrolledInstructor.email === req.body.email)))) { course.notEnrolledInstructors.push(req.body); await course.save(); }
+            const newCourseForInstructor = await CourseModel.findById(req.params.courseId)
+            const Instructor = newCourseForInstructor.notEnrolledInstructors.find(notEnrolledInstructor => (notEnrolledInstructor.email === req.body.email))
+            res.status(201).send(Instructor); break;
+          default: next(createError(400))
+        }
+      }
+    } else {
+      next(createError(404, `course ${req.params.courseId} not found`))
     }
   } catch (error) {
     console.log(error.message);

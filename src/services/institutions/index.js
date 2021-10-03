@@ -54,6 +54,20 @@ institutionsRouter.get("/:institutionId/courses", JWTAuthMiddleware, async (req,
   }
 })
 
+institutionsRouter.get("/:institutionId/participants", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const institution = await institutionModel.findById(req.params.institutionId).populate("owner").populate("instructors").populate("assistants").populate("learners")
+    if (institution) {
+      res.send(institution)
+    } else {
+      next(createError(404, `institution ${req.params.institutionId} not found`))
+    }
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while getting institutions"))
+  }
+})
+
 // institutionsRouter.get("/me/:id", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
 //     const user = await UserModel.findById(req.user._id).populate("institutions")

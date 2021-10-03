@@ -10,7 +10,6 @@ const UserSchema = new Schema(
     surname: { type: String, required: true, },
     email: { type: String, required: true, lowercase: true, },
     password: { type: String, required: true },
-    role: { type: String, required: true, enum: ["Admin","User"] },
     institutions: [{ type: Schema.Types.ObjectId, ref: "Institution" }],
     refreshToken: { type: String },
   },

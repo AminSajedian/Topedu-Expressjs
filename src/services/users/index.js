@@ -54,21 +54,21 @@ usersRouter.post("/refreshToken", async (req, res, next) => {
 //   }
 // })
 
-// usersRouter.post("/register", async (req, res, next) => {
-//   try {
-//     const newUser = new UserModel(req.body)
-//     const { _id } = await newUser.save()
+usersRouter.post("/register", async (req, res, next) => {
+  try {
+    const newUser = new UserModel(req.body)
+    const { _id } = await newUser.save()
 
-//     res.status(201).send({ _id })
-//   } catch (error) {
-//     console.log(error)
-//     if (error.name === "ValidationError") {
-//       next(createError(400, error))
-//     } else {
-//       next(createError(500, "An error occurred while saving user"))
-//     }
-//   }
-// })
+    res.status(201).send({ _id })
+  } catch (error) {
+    console.log(error)
+    if (error.name === "ValidationError") {
+      next(createError(400, error))
+    } else {
+      next(createError(500, "An error occurred while saving user"))
+    }
+  }
+})
 
 // usersRouter.put("/register/institution", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
