@@ -58,16 +58,16 @@ coursesRouter.post("/:courseId/invitation", JWTAuthMiddleware, async (req, res, 
       if (user) {
         switch (req.body.role) {
           case "Learner":
+            if (!(course.learners.find(learner => learner.toString() === user._id.toString()))) { course.learners.push(user._id); await course.save(); } else { res.status(400).send({ message: `User has already been added to the course by this email: ${req.body.email}` }) }
             if (!(institution.learners.find(learner => learner.toString() === user._id.toString()))) { institution.learners.push(user._id); await institution.save(); }
-            if (!(course.learners.find(learner => learner.toString() === user._id.toString()))) { course.learners.push(user._id); await course.save(); }
             break;
           case "Assistant":
+            if (!(course.assistants.find(assistant => assistant.toString() === user._id.toString()))) { course.assistants.push(user._id); await course.save(); } else { res.status(400).send({ message: `User has already been added to the course by this email: ${req.body.email}` }) }
             if (!(institution.assistants.find(assistant => assistant.toString() === user._id.toString()))) { institution.assistants.push(user._id); await institution.save(); }
-            if (!(course.assistants.find(assistant => assistant.toString() === user._id.toString()))) { course.assistants.push(user._id); await course.save(); }
             break;
           case "Instructor":
+            if (!(course.instructors.find(instructor => instructor.toString() === user._id.toString()))) { course.instructors.push(user._id); await course.save(); } else { res.status(400).send({ message: `User has already been added to the course by this email: ${req.body.email}` }) }
             if (!(institution.instructors.find(instructor => instructor.toString() === user._id.toString()))) { institution.instructors.push(user._id); await institution.save(); }
-            if (!(course.instructors.find(instructor => instructor.toString() === user._id.toString()))) { course.instructors.push(user._id); await course.save(); }
             break;
           default: next(createError(400))
         }

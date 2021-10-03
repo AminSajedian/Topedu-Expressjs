@@ -7,6 +7,19 @@ import UserModel from "../users/schema.js"
 
 const institutionsRouter = express.Router()
 
+institutionsRouter.get("/:institutionId/join/:userId", async (req, res, next) => {
+  try {
+    const institutionId = req.params.institutionId
+    const userId = req.params.userId
+    const institution = await institutionModel.findById(institutionId).populate("users")
+    
+    res.send(institution)
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while getting institutions"))
+  }
+})
+
 institutionsRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
     const userAndInstitutions = await UserModel.findById(req.user._id).populate("institutions")
