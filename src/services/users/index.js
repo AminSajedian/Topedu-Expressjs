@@ -17,8 +17,8 @@ usersRouter.post("/register", async (req, res, next) => {
     const user = await UserModel.checkCredentials(email, password)
     if (user) {
       const { accessToken, refreshToken } = await JWTAuthenticate(user)
-      res.cookie("accessToken", accessToken) // in production environment you should have sameSite: "none", secure: true
-      res.cookie("refreshToken", refreshToken)
+      res.cookie("accessToken", accessToken, { sameSite: 'none', secure: true }) // in production environment you should have sameSite: "none", secure: true
+      res.cookie("refreshToken", refreshToken, { sameSite: 'none', secure: true })
       res.status(200).send({ "name": user.name, "surname": user.surname })
     }
   } catch (error) {
@@ -38,8 +38,8 @@ usersRouter.post("/login", async (req, res, next) => {
     if (user) {
       const { accessToken, refreshToken } = await JWTAuthenticate(user)
 
-      res.cookie("accessToken", accessToken) // in production environment you should have sameSite: "none", secure: true
-      res.cookie("refreshToken", refreshToken)
+      res.cookie("accessToken", accessToken, { sameSite: 'none', secure: true }) // in production environment you should have sameSite: "none", secure: true
+      res.cookie("refreshToken", refreshToken, { sameSite: 'none', secure: true })
       res.status(200).send({ "name": user.name, "surname": user.surname })
 
       // res.status(200).redirect(`http://localhost:3000?accessToken=${req.user.tokens.accessToken}&refreshToken=${req.user.tokens.refreshToken}`)
@@ -59,8 +59,8 @@ usersRouter.post("/refreshToken", async (req, res, next) => {
     // actual refresh token is coming from req.cookies
     // 1. Check the validity and integrity of the actual refresh token, if everything is ok we are generating a new pair of access + refresh tokens
     const { newAccessToken, newRefreshToken } = await refreshTokens(req.cookies.refreshToken)
-    res.cookie("accessToken", newAccessToken)
-    res.cookie("refreshToken", newRefreshToken)
+    res.cookie("accessToken", newAccessToken, { sameSite: 'none', secure: true })
+    res.cookie("refreshToken", newRefreshToken, { sameSite: 'none', secure: true })
     // 2. Send back tokens as response
     res.status(200).send()
   } catch (error) {
