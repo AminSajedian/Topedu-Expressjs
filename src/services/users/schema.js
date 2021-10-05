@@ -10,12 +10,10 @@ const UserSchema = new Schema(
     surname: { type: String, required: true, },
     email: { type: String, required: true, lowercase: true, },
     password: { type: String, required: true },
-    institutions: [{ type: Schema.Types.ObjectId, ref: "Institution" }],
     refreshToken: { type: String },
   },
   { timestamps: true }
 )
-
 
 UserSchema.pre("save", async function (next) {
   const newUser = this

@@ -8,6 +8,29 @@ import createError from "http-errors"
 
 const usersRouter = express.Router()
 
+usersRouter.post("/register", async (req, res, next) => {
+  try {
+    const newUser = new UserModel(req.body)
+    await newUser.save()
+
+    const { email, password } = req.body
+    const user = await UserModel.checkCredentials(email, password)
+    if (user) {
+      const { accessToken, refreshToken } = await JWTAuthenticate(user)
+      res.cookie("accessToken", accessToken) // in production environment you should have sameSite: "none", secure: true
+      res.cookie("refreshToken", refreshToken)
+      res.status(200).send({ "name": user.name, "surname": user.surname })
+    }
+  } catch (error) {
+    console.log(error)
+    if (error.name === "ValidationError") {
+      next(createError(400, error))
+    } else {
+      next(createError(500, "An error occurred while saving user"))
+    }
+  }
+})
+
 usersRouter.post("/login", async (req, res, next) => {
   try {
     const { email, password } = req.body
@@ -54,21 +77,7 @@ usersRouter.post("/refreshToken", async (req, res, next) => {
 //   }
 // })
 
-usersRouter.post("/register", async (req, res, next) => {
-  try {
-    const newUser = new UserModel(req.body)
-    const { _id } = await newUser.save()
 
-    res.status(201).send({ _id })
-  } catch (error) {
-    console.log(error)
-    if (error.name === "ValidationError") {
-      next(createError(400, error))
-    } else {
-      next(createError(500, "An error occurred while saving user"))
-    }
-  }
-})
 
 // usersRouter.put("/register/institution", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
