@@ -37,4 +37,51 @@ CourseSchema.statics.userType = async function (courseId, userId) {
   }
 }
 
+CourseSchema.statics.getNotEnrolledUserType = async function (courseId, userId) {
+  const course = await this.findById(courseId)
+  if (course) {
+    if (course.notEnrolledUsers.instructors.find(instructor => instructor._id.toString() === userId.toString())) return "instructor"
+    if (course.notEnrolledUsers.assistants.find(assistant => assistant._id.toString() === userId.toString())) return "assistant"
+    if (course.notEnrolledUsers.learners.find(learner => learner._id.toString() === userId.toString())) return "learner"
+    else return null
+  } else {
+    return "not found"
+  }
+}
+
+CourseSchema.statics.getNotEnrolledUser = async function (courseId, userId, userType) {
+  const course = await this.findById(courseId)
+  if (userType === "learner") { const learner = course.notEnrolledUsers.learners.find(learner => learner._id.toString() === userId.toString()); return learner; }
+  if (userType === "assistant") { const assistant = course.notEnrolledUsers.assistants.find(assistant => assistant._id.toString() === userId.toString()); return assistant; }
+  if (userType === "instructor") { const instructor = course.notEnrolledUsers.instructors.find(instructor => instructor._id.toString() === userId.toString()); return instructor; }
+  else {
+    return "not found"
+  }
+}
+
+CourseSchema.statics.deleteNotEnrolledUser = async function (courseId, userId, userType) {
+  const course = await this.findById(courseId)
+  if (userType === "learner") {
+    const newNotEnrolledLearners = course.notEnrolledUsers.learners.filter((learner, index) => learner._id.toString() !== userId.toString())
+    course.notEnrolledUsers.learners = newNotEnrolledLearners
+    await course.save();
+    return course
+  }
+  if (userType === "assistant") {
+    const newNotEnrolledAssistants = course.notEnrolledUsers.assistants.filter((assistant, index) => assistant._id.toString() !== userId.toString())
+    course.notEnrolledUsers.assistants = newNotEnrolledAssistants
+    await course.save();
+    return course
+  }
+  if (userType === "instructor") {
+    const newNotEnrolledInstructors = course.notEnrolledUsers.instructors.filter((instructor, index) => instructor._id.toString() !== userId.toString())
+    course.notEnrolledUsers.instructors = newNotEnrolledInstructors
+    await course.save();
+    return course
+  }
+  else {
+    return "not found"
+  }
+}
+
 export default model("Course", CourseSchema)

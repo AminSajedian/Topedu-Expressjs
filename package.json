@@ -12,6 +12,7 @@
   "author": "Mohammadamin Sajedian",
   "license": "ISC",
   "dependencies": {
+    "@sendgrid/mail": "^7.4.7",
     "atob": "^2.1.2",
     "bcrypt": "^5.0.1",
     "cloudinary": "^1.27.0",
