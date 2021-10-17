@@ -281,7 +281,7 @@ coursesRouter.post("/:courseId/email/invitation/:userId", JWTAuthMiddleware, asy
           from: 'mohammadsajedian@gmail.com', // Use the email address or domain you verified above
           subject: 'TopEdu Course Notification',
           text: `Hello, You have been added to the ${course.title} coures`,
-          html: `<strong>Hello, You have been added to the ${course.title} coures</strong>`,
+          html: `Hello, You have been added to the <strong>${course.title}</strong> coures`,
         };
         // Send Email
         try {
@@ -297,7 +297,7 @@ coursesRouter.post("/:courseId/email/invitation/:userId", JWTAuthMiddleware, asy
           from: 'mohammadsajedian@gmail.com', // Use the email address or domain you verified above
           subject: 'TopEdu Course Invitation',
           text: `Hello, You have been invited to the ${course.title} coures use this link to join the course ${FrontendURL}/join/course/${course._id}/${req.params.userId}`,
-          html: `Hello, You have been invited to the <strong>${course.title}</strong> coures use this link to join the course in TopEdu: ${FrontendURL}/join/course/${course._id}/${req.params.userId}`,
+          html: `Hello, You have been invited to the <strong>${course.title}</strong> coures use this link to join the course in TopEdu: <a href="${FrontendURL}/join/course/${course._id}/${req.params.userId}">${FrontendURL}/join/course/${course._id}/${req.params.userId}</a>`,
         };
         // Send Email
         try {
