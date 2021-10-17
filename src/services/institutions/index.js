@@ -66,6 +66,234 @@ institutionsRouter.get("/:institutionId/courses", JWTAuthMiddleware, async (req,
   }
 })
 
+institutionsRouter.get("/:institutionId/participants", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const institution = await institutionModel.findById(req.params.institutionId).populate("participants.admins").populate("participants.instructors").populate("participants.assistants").populate("participants.learners")
+    if (institution) {
+      res.send(institution)
+    } else {
+      next(createError(404, `institution ${req.params.institutionId} not found`))
+    }
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while getting institutions"))
+  }
+})
+
+// **********************************************************
+// **********************************************************
+// **********************************************************
+// **********************************************************
+// **********************************************************
+
+// Invite a participant to the institution with institutionId
+// If the user (Learner/Assistant/Instructor) has already registered in the TopEdu, user will be added to the institution
+// If the user (Learner/Assistant/Instructor) has not already registered in the TopEdu, UserId and institutionId will be sent and invitation link will be created in the frontend
+institutionsRouter.post("/:institutionId/invitation", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const institution = await institutionModel.findById(req.params.institutionId)
+    if (institution) {
+      const user = await UserModel.findOne({ "email": req.body.email })
+      if (user) {
+        switch (req.body.role) {
+          case "Learner":
+            if (!(institution.participants.learners.find(learner => learner.toString() === user._id.toString()))) { institution.participants.learners.push(user._id); await institution.save(); } else { res.status(400).send({ message: `User has already been added to the institution by this email: ${req.body.email}` }) }
+            if (!(institution.participants.learners.find(learner => learner.toString() === user._id.toString()))) { institution.participants.learners.push(user._id); await institution.save(); }
+            break;
+          case "Assistant":
+            if (!(institution.participants.assistants.find(assistant => assistant.toString() === user._id.toString()))) { institution.participants.assistants.push(user._id); await institution.save(); } else { res.status(400).send({ message: `User has already been added to the institution by this email: ${req.body.email}` }) }
+            if (!(institution.participants.assistants.find(assistant => assistant.toString() === user._id.toString()))) { institution.participants.assistants.push(user._id); await institution.save(); }
+            break;
+          case "Instructor":
+            if (!(institution.participants.instructors.find(instructor => instructor.toString() === user._id.toString()))) { institution.participants.instructors.push(user._id); await institution.save(); } else { res.status(400).send({ message: `User has already been added to the institution by this email: ${req.body.email}` }) }
+            if (!(institution.participants.instructors.find(instructor => instructor.toString() === user._id.toString()))) { institution.participants.instructors.push(user._id); await institution.save(); }
+            break;
+          default: next(createError(400))
+        }
+        res.status(201).send({ message: "User added to the institution" })
+      } else {
+        switch (req.body.role) {
+          case "Learner":
+            if (!(institution.pendingUsers.learners.find(learner => (learner.email === req.body.email)))) { institution.pendingUsers.learners.push(req.body); await institution.save(); }
+            const newinstitutionForLearner = await institutionModel.findById(req.params.institutionId)
+            const Learner = newinstitutionForLearner.pendingUsers.learners.find(learner => (learner.email === req.body.email))
+            res.status(201).send(Learner); break;
+          case "Assistant":
+            if (!(institution.pendingUsers.assistants.find(assistant => (assistant.email === req.body.email)))) { institution.pendingUsers.assistants.push(req.body); await institution.save(); }
+            const newinstitutionForAssistant = await institutionModel.findById(req.params.institutionId)
+            const Assistant = newinstitutionForAssistant.pendingUsers.assistants.find(assistant => (assistant.email === req.body.email))
+            res.status(201).send(Assistant); break;
+          case "Instructor":
+            if (!(institution.pendingUsers.instructors.find(instructor => (instructor.email === req.body.email)))) { institution.pendingUsers.instructors.push(req.body); await institution.save(); }
+            const newinstitutionForInstructor = await institutionModel.findById(req.params.institutionId)
+            const Instructor = newinstitutionForInstructor.pendingUsers.instructors.find(instructor => (instructor.email === req.body.email))
+            res.status(201).send(Instructor); break;
+          default: next(createError(400))
+        }
+      }
+    } else {
+      next(createError(404, `institution ${req.params.institutionId} not found`))
+    }
+  } catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+})
+
+// Manipulate the institution with institutionId
+institutionsRouter.put("/:institutionId", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const institution = await institutionModel.findById(req.params.institutionId)
+    const userType = await institutionModel.userType(req.params.institutionId, req.user._id)
+    if (institution) {
+      switch (userType) {
+        case "admin": const updateinstitutionForAdmin = await institutionModel.findByIdAndUpdate(req.params.institutionId, req.body, { runValidators: true, new: true, });
+          res.status(200).send(updateinstitutionForAdmin); break;
+        case "instructor": const updateinstitutionForInstructor = await institutionModel.findByIdAndUpdate(req.params.institutionId, req.body, { runValidators: true, new: true, });
+          res.status(200).send(updateinstitutionForInstructor); break;
+        case "assistant": next(createError(401, `Unauthorized user ${req.user._id}`)); break;
+        case "learner": next(createError(401, `Unauthorized user ${req.user._id}`)); break;
+        default: next(createError(404, `user ${req.user._id} not found in this institution ${req.params.institutionId}`))
+      }
+    } else {
+      next(createError(404, `institution ${req.params.institutionId} not found`))
+    }
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while modifying institution"))
+  }
+})
+
+// Send an invitation link via Email to the pendingUser
+institutionsRouter.post("/:institutionId/email/invitation/:userId", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const institution = await institutionModel.findById(req.params.institutionId)
+    if (institution) {
+      const user = await UserModel.findOne({ "email": req.body.email })
+      if (user) {
+        // send email that user added to the institution
+        const msg1 = {
+          to: user.email,
+          from: 'mohammadsajedian@gmail.com', // Use the email address or domain you verified above
+          subject: 'TopEdu institution Notification',
+          text: `Hello, You have been added to the ${institution.title} coures`,
+          html: `<strong>Hello, You have been added to the ${institution.title} coures</strong>`,
+        };
+        // Send Email
+        try {
+          await sgMail.send(msg1);
+          res.status(200).send();
+        } catch (error) {
+          console.log(error);
+        }
+      } else {
+        // send email that user invited to the institution
+        const msg2 = {
+          to: req.body.email,
+          from: 'mohammadsajedian@gmail.com', // Use the email address or domain you verified above
+          subject: 'TopEdu institution Invitation',
+          text: `Hello, You have been invited to the ${institution.title} coures use this link to join the institution ${FrontendURL}/join/institution/${institution._id}/${req.params.userId}`,
+          html: `Hello, You have been invited to the <strong>${institution.title}</strong> coures use this link to join the institution in TopEdu: ${FrontendURL}/join/institution/${institution._id}/${req.params.userId}`,
+        };
+        // Send Email
+        try {
+          await sgMail.send(msg2);
+          res.status(200).send();
+        } catch (error) {
+          console.log(error);
+        }
+      }
+    } else {
+      next(createError(404, `institution ${req.params.institutionId} not found`))
+    }
+  }
+  catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+});
+
+// Get pendingUser of the institution with institutionId and pendingUserId
+institutionsRouter.get("/:institutionId/pendingUser/:pendingUserId", async (req, res, next) => {
+  try {
+    const institution = await institutionModel.findById(req.params.institutionId)
+    const userType = await institutionModel.getpendingUserType(req.params.institutionId, req.params.pendingUserId)
+    if (institution) {
+      const user = await institutionModel.getpendingUser(req.params.institutionId, req.params.pendingUserId, userType)
+      res.status(200).send(user);
+      // switch (userType) {
+      //   case "learner":
+      //     const learner = await institutionModel.findOne({ "institution.pendingUsers.learners._id": req.params.pendingUserId })
+      //     console.log('-----------------------')
+      //     console.log('learner:', learner)
+      //     res.status(200).send(learner);
+      //     break;
+      //   case "assistant":
+      //     const assistant = await institutionModel.findOne({ "institution.pendingUsers.assistants": req.params.pendingUserId })
+      //     res.status(200).send(assistant); break;
+      //     break;
+      //   case "instructor":
+      //     const instructor = await institutionModel.findOne({ "institution.pendingUsers.instructors": req.params.pendingUserId })
+      //     res.status(200).send(instructor); break;
+      //   default: next(createError(404, `user ${req.params.pendingUserId} not found in this institution ${req.params.institutionId}`))
+      // }
+    } else {
+      next(createError(404, `institution ${req.params.institutionId} not found`))
+    }
+  } catch (error) {
+    console.log(error.message);
+    next(createError(500, "An error occurred while getting institutions"))
+  }
+})
+
+// pendingUser join the institution with institutionId and pendingUserId
+institutionsRouter.post("/:institutionId/join/:pendingUserId", async (req, res, next) => {
+  try {
+    let institution = await institutionModel.findById(req.params.institutionId)
+    const userType = await institutionModel.getpendingUserType(req.params.institutionId, req.params.pendingUserId)
+    if (institution) {
+      const newinstitution = await institutionModel.deletependingUser(req.params.institutionId, req.params.pendingUserId, userType)
+      const institution = await institutionModel.findOne({ institutions: req.params.institutionId })
+      console.log('institution:', institution)
+      switch (userType) {
+        case "learner":
+          const learner = new UserModel(req.body);
+          const newLearner = await learner.save();
+          institution.participants.learners.push(newLearner._id)
+          newinstitution.participants.learners.push(newLearner._id)
+          institution = newinstitution
+          await institution.save();
+          await institution.save();
+          res.status(201).send(newLearner)
+          break;
+        case "instructor":
+          const instructor = new UserModel(req.body);
+          const newInstructor = await instructor.save();
+          institution.participants.instructors.push(newInstructor._id)
+          newinstitution.participants.instructors.push(newInstructor._id)
+          await institution.save();
+          res.status(201).send(newInstructor)
+          break;
+        case "assistant":
+          const assistant = new UserModel(req.body);
+          const newAssistant = await assistant.save();
+          institution.participants.assistants.push(newAssistant._id)
+          newinstitution.participants.assistants.push(newAssistant._id)
+          await institution.save();
+          res.status(201).send(newAssistant)
+          break;
+        default: next(createError(404, `user ${req.params.pendingUserId} not found in this institution ${req.params.institutionId}`))
+      }
+    } else {
+      next(createError(404, `institution ${req.params.institutionId} not found`))
+    }
+  } catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+})
+
+
 
 // **********************************************************
 // **********************************************************
@@ -93,33 +321,6 @@ institutionsRouter.get("/:institutionId/courses", JWTAuthMiddleware, async (req,
 //     res.send({ "courses": coursesForLearner, "userType": "learner" })
 // }
 
-
-institutionsRouter.get("/:institutionId/participants", JWTAuthMiddleware, async (req, res, next) => {
-  try {
-    const institution = await institutionModel.findById(req.params.institutionId).populate("participants.admins").populate("participants.instructors").populate("participants.assistants").populate("participants.learners")
-    if (institution) {
-      res.send(institution)
-    } else {
-      next(createError(404, `institution ${req.params.institutionId} not found`))
-    }
-  } catch (error) {
-    console.log(error)
-    next(createError(500, "An error occurred while getting institutions"))
-  }
-})
-
-institutionsRouter.get("/:institutionId/join/:userId", async (req, res, next) => {
-  try {
-    const institutionId = req.params.institutionId
-    const userId = req.params.userId
-    const institution = await institutionModel.findById(institutionId).populate("users")
-
-    res.send(institution)
-  } catch (error) {
-    console.log(error)
-    next(createError(500, "An error occurred while getting institutions"))
-  }
-})
 
 // next(createError(401, "Forbidden"))
 // const institutionForOwner = await institutionModel.findById(institutionId).populate("owner").populate("instructors").populate("learners").populate("assistants").populate("courses")

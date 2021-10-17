@@ -5,10 +5,10 @@ import { JWTAuthMiddleware } from '../../auth/middlewares.js'
 import { fileUpload } from '../../utils/upload/index.js'
 import institutionModel from "../institutions/schema.js"
 import UserModel from "../users/schema.js"
-import CourseModel from "./schema.js"
+import courseModel from "./schema.js"
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-const FrontendURL = process.env.FRONTEND_LOCAL_URL || process.env.FRONTEND_CLOUD_URL
+const FrontendURL = process.env.FRONTEND_CLOUD_URL || FRONTEND_LOCAL_URL
 
 const coursesRouter = express.Router()
 
@@ -17,7 +17,7 @@ coursesRouter.post("/:institutionId", JWTAuthMiddleware, async (req, res, next) 
   try {
     const institution = await institutionModel.findById(req.params.institutionId)
     if (institution) {
-      const newCourse = new CourseModel(req.body)
+      const newCourse = new courseModel(req.body)
       newCourse.creater = req.user._id
       newCourse.participants.admins[0] = req.user._id
       const { _id } = await newCourse.save()
@@ -33,10 +33,11 @@ coursesRouter.post("/:institutionId", JWTAuthMiddleware, async (req, res, next) 
   }
 })
 
+// Get the course with courseId
 coursesRouter.get("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const course = await CourseModel.findById(req.params.courseId)
-    const userType = await CourseModel.userType(req.params.courseId, req.user._id)
+    const course = await courseModel.findById(req.params.courseId)
+    const userType = await courseModel.userType(req.params.courseId, req.user._id)
     if (course) {
       switch (userType) {
         case "admin": res.status(200).send({ course, userType }); break;
@@ -54,10 +55,67 @@ coursesRouter.get("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
   }
 })
 
+// Manipulate the course with courseId
+coursesRouter.put("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const course = await courseModel.findById(req.params.courseId)
+    const userType = await courseModel.userType(req.params.courseId, req.user._id)
+    if (course) {
+      switch (userType) {
+        case "admin": const updateCourseForAdmin = await courseModel.findByIdAndUpdate(req.params.courseId, req.body, { runValidators: true, new: true, });
+          res.status(200).send(updateCourseForAdmin); break;
+        case "instructor": const updateCourseForInstructor = await courseModel.findByIdAndUpdate(req.params.courseId, req.body, { runValidators: true, new: true, });
+          res.status(200).send(updateCourseForInstructor); break;
+        case "assistant": next(createError(401, `Unauthorized user ${req.user._id}`)); break;
+        case "learner": next(createError(401, `Unauthorized user ${req.user._id}`)); break;
+        default: next(createError(404, `user ${req.user._id} not found in this course ${req.params.courseId}`))
+      }
+    } else {
+      next(createError(404, `Course ${req.params.courseId} not found`))
+    }
+  } catch (error) {
+    console.log(error)
+    next(createError(500, "An error occurred while modifying course"))
+  }
+})
+
+// Delete the course with courseId
+coursesRouter.delete("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
+  try {
+    const course = await courseModel.findByIdAndDelete(req.params.courseId)
+    if (course) {
+      const institution = await institutionModel.findById(req.body.institutionId)
+      if (institution) {
+        const newCourses = institution.courses.filter((course) => { return (course.toString() !== req.params.courseId.toString()) })
+        institution.courses = newCourses
+        await institution.save()
+        res.status(204).send()
+      }
+    } else {
+      next(createError(404, `Course with ID ${req.params.courseId} not found`))
+    }
+  } catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+})
+
+// Change the Coures image
+coursesRouter.post("/upload/image", JWTAuthMiddleware, fileUpload.single("image"), async (req, res, next) => {
+  try {
+    res.send(req.file);
+  }
+  catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+});
+
+// Get the participants of the course with courseId
 coursesRouter.get("/:courseId/participants", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const course = await CourseModel.findById(req.params.courseId).populate("participants.admins").populate("participants.instructors").populate("participants.assistants").populate("participants.learners")
-    const userType = await CourseModel.userType(req.params.courseId, req.user._id)
+    const course = await courseModel.findById(req.params.courseId).populate("participants.admins").populate("participants.instructors").populate("participants.assistants").populate("participants.learners")
+    const userType = await courseModel.userType(req.params.courseId, req.user._id)
     if (course) {
       switch (userType) {
         case "admin": res.status(200).send(course); break;
@@ -75,32 +133,12 @@ coursesRouter.get("/:courseId/participants", JWTAuthMiddleware, async (req, res,
   }
 })
 
-coursesRouter.put("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
-  try {
-    const course = await CourseModel.findById(req.params.courseId)
-    const userType = await CourseModel.userType(req.params.courseId, req.user._id)
-    if (course) {
-      switch (userType) {
-        case "admin": const updateCourseForAdmin = await CourseModel.findByIdAndUpdate(req.params.courseId, req.body, { runValidators: true, new: true, });
-          res.status(200).send(updateCourseForAdmin); break;
-        case "instructor": const updateCourseForInstructor = await CourseModel.findByIdAndUpdate(req.params.courseId, req.body, { runValidators: true, new: true, });
-          res.status(200).send(updateCourseForInstructor); break;
-        case "assistant": res.status(200).send(updateCourse); break;
-        case "learner": res.status(200).send(updateCourse); break;
-        default: next(createError(404, `user ${req.user._id} not found in this course ${req.params.courseId}`))
-      }
-    } else {
-      next(createError(404, `Course ${req.params.courseId} not found`))
-    }
-  } catch (error) {
-    console.log(error)
-    next(createError(500, "An error occurred while modifying course"))
-  }
-})
-
+// Invite a participant to the course with courseId
+// If the user (Learner/Assistant/Instructor) has already registered in the TopEdu, user will be added to the course
+// If the user (Learner/Assistant/Instructor) has not already registered in the TopEdu, UserId and courseId will be sent and invitation link will be created in the frontend
 coursesRouter.post("/:courseId/invitation", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const course = await CourseModel.findById(req.params.courseId)
+    const course = await courseModel.findById(req.params.courseId)
     const institution = await institutionModel.findOne({ courses: req.params.courseId })
     if (course) {
       const user = await UserModel.findOne({ "email": req.body.email })
@@ -125,17 +163,17 @@ coursesRouter.post("/:courseId/invitation", JWTAuthMiddleware, async (req, res, 
         switch (req.body.role) {
           case "Learner":
             if (!(course.notEnrolledUsers.learners.find(learner => (learner.email === req.body.email)))) { course.notEnrolledUsers.learners.push(req.body); await course.save(); }
-            const newCourseForLearner = await CourseModel.findById(req.params.courseId)
+            const newCourseForLearner = await courseModel.findById(req.params.courseId)
             const Learner = newCourseForLearner.notEnrolledUsers.learners.find(learner => (learner.email === req.body.email))
             res.status(201).send(Learner); break;
           case "Assistant":
             if (!(course.notEnrolledUsers.assistants.find(assistant => (assistant.email === req.body.email)))) { course.notEnrolledUsers.assistants.push(req.body); await course.save(); }
-            const newCourseForAssistant = await CourseModel.findById(req.params.courseId)
+            const newCourseForAssistant = await courseModel.findById(req.params.courseId)
             const Assistant = newCourseForAssistant.notEnrolledUsers.assistants.find(assistant => (assistant.email === req.body.email))
             res.status(201).send(Assistant); break;
           case "Instructor":
             if (!(course.notEnrolledUsers.instructors.find(instructor => (instructor.email === req.body.email)))) { course.notEnrolledUsers.instructors.push(req.body); await course.save(); }
-            const newCourseForInstructor = await CourseModel.findById(req.params.courseId)
+            const newCourseForInstructor = await courseModel.findById(req.params.courseId)
             const Instructor = newCourseForInstructor.notEnrolledUsers.instructors.find(instructor => (instructor.email === req.body.email))
             res.status(201).send(Instructor); break;
           default: next(createError(400))
@@ -150,27 +188,27 @@ coursesRouter.post("/:courseId/invitation", JWTAuthMiddleware, async (req, res, 
   }
 })
 
+// Get notEnrolledUser of the course with courseId and notEnrolledUserId
 coursesRouter.get("/:courseId/notEnrolledUser/:notEnrolledUserId", async (req, res, next) => {
   try {
-    const course = await CourseModel.findById(req.params.courseId)
-    const userType = await CourseModel.getNotEnrolledUserType(req.params.courseId, req.params.notEnrolledUserId)
+    const course = await courseModel.findById(req.params.courseId)
+    const userType = await courseModel.getNotEnrolledUserType(req.params.courseId, req.params.notEnrolledUserId)
     if (course) {
-      const user = await CourseModel.getNotEnrolledUser(req.params.courseId, req.params.notEnrolledUserId, userType)
+      const user = await courseModel.getNotEnrolledUser(req.params.courseId, req.params.notEnrolledUserId, userType)
       res.status(200).send(user);
-
       // switch (userType) {
       //   case "learner":
-      //     const learner = await CourseModel.findOne({ "course.notEnrolledUsers.learners._id": req.params.notEnrolledUserId })
+      //     const learner = await courseModel.findOne({ "course.notEnrolledUsers.learners._id": req.params.notEnrolledUserId })
       //     console.log('-----------------------')
       //     console.log('learner:', learner)
       //     res.status(200).send(learner);
       //     break;
       //   case "assistant":
-      //     const assistant = await CourseModel.findOne({ "course.notEnrolledUsers.assistants": req.params.notEnrolledUserId })
+      //     const assistant = await courseModel.findOne({ "course.notEnrolledUsers.assistants": req.params.notEnrolledUserId })
       //     res.status(200).send(assistant); break;
       //     break;
       //   case "instructor":
-      //     const instructor = await CourseModel.findOne({ "course.notEnrolledUsers.instructors": req.params.notEnrolledUserId })
+      //     const instructor = await courseModel.findOne({ "course.notEnrolledUsers.instructors": req.params.notEnrolledUserId })
       //     res.status(200).send(instructor); break;
       //   default: next(createError(404, `user ${req.params.notEnrolledUserId} not found in this course ${req.params.courseId}`))
       // }
@@ -183,12 +221,13 @@ coursesRouter.get("/:courseId/notEnrolledUser/:notEnrolledUserId", async (req, r
   }
 })
 
+// notEnrolledUser join the course with courseId and notEnrolledUserId
 coursesRouter.post("/:courseId/join/:notEnrolledUserId", async (req, res, next) => {
   try {
-    let course = await CourseModel.findById(req.params.courseId)
-    const userType = await CourseModel.getNotEnrolledUserType(req.params.courseId, req.params.notEnrolledUserId)
+    let course = await courseModel.findById(req.params.courseId)
+    const userType = await courseModel.getNotEnrolledUserType(req.params.courseId, req.params.notEnrolledUserId)
     if (course) {
-      const newCourse = await CourseModel.deleteNotEnrolledUser(req.params.courseId, req.params.notEnrolledUserId, userType)
+      const newCourse = await courseModel.deleteNotEnrolledUser(req.params.courseId, req.params.notEnrolledUserId, userType)
       const institution = await institutionModel.findOne({ courses: req.params.courseId })
       console.log('institution:', institution)
       switch (userType) {
@@ -227,59 +266,12 @@ coursesRouter.post("/:courseId/join/:notEnrolledUserId", async (req, res, next) 
     console.log(error.message);
     next(error)
   }
-
-  // try {
-  //   const newUser = new UserModel(req.body)
-  //   await newUser.save()
-
-
-
-  // } catch (error) {
-  //   console.log(error)
-  //   if (error.name === "ValidationError") {
-  //     next(createError(400, error))
-  //   } else {
-  //     next(createError(500, "An error occurred while saving user"))
-  //   }
-  // }
-
-
 })
 
-
-coursesRouter.delete("/:courseId", JWTAuthMiddleware, async (req, res, next) => {
+// Send an invitation link via Email to the notEnrolledUser
+coursesRouter.post("/:courseId/email/invitation/:userId", JWTAuthMiddleware, async (req, res, next) => {
   try {
-    const course = await CourseModel.findByIdAndDelete(req.params.courseId)
-    if (course) {
-      const institution = await institutionModel.findById(req.body.institutionId)
-      if (institution) {
-        const newCourses = institution.courses.filter((course) => { return (course.toString() !== req.params.courseId.toString()) })
-        institution.courses = newCourses
-        await institution.save()
-        res.status(204).send()
-      }
-    } else {
-      next(createError(404, `Course with ID ${req.params.courseId} not found`))
-    }
-  } catch (error) {
-    console.log(error.message);
-    next(error)
-  }
-})
-
-coursesRouter.post("/upload/image", JWTAuthMiddleware, fileUpload.single("image"), async (req, res, next) => {
-  try {
-    res.send(req.file);
-  }
-  catch (error) {
-    console.log(error.message);
-    next(error)
-  }
-});
-
-coursesRouter.post("/:courseId/sendemail/invitation/:userId", JWTAuthMiddleware, async (req, res, next) => {
-  try {
-    const course = await CourseModel.findById(req.params.courseId)
+    const course = await courseModel.findById(req.params.courseId)
     if (course) {
       const user = await UserModel.findOne({ "email": req.body.email })
       if (user) {
@@ -299,12 +291,6 @@ coursesRouter.post("/:courseId/sendemail/invitation/:userId", JWTAuthMiddleware,
           console.log(error);
         }
       } else {
-        // if (
-        //   course.participants.learners.find(learner => learner._id.toString() === req.params.userId.toString()) ||
-        //   course.participants.assistants.find(assistant => assistant._id.toString() === req.params.userId.toString()) ||
-        //   course.participants.instructors.find(instructor => instructor._id.toString() === req.params.userId.toString())
-        // ) 
-
         // send email that user invited to the course
         const msg2 = {
           to: req.body.email,
@@ -337,7 +323,7 @@ coursesRouter.post("/:courseId/sendemail/invitation/:userId", JWTAuthMiddleware,
 // coursesRouter.get("/", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
 //     console.log('req.user._id:', req.user._id)
-//     const courses = await CourseModel.find({ users: req.user._id.toString() }).populate("users")
+//     const courses = await courseModel.find({ users: req.user._id.toString() }).populate("users")
 //     res.send(courses)
 //   } catch (error) {
 //     console.log(error)
@@ -348,7 +334,7 @@ coursesRouter.post("/:courseId/sendemail/invitation/:userId", JWTAuthMiddleware,
 // coursesRouter.get("/me/stories", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
 //     console.log('req.user._id:', req.user._id)
-//     const courses = await CourseModel.find({ users: req.user._id.toString() }).populate("users")
+//     const courses = await courseModel.find({ users: req.user._id.toString() }).populate("users")
 //     res.send(courses)
 //   } catch (error) {
 //     console.log(error)
@@ -359,7 +345,7 @@ coursesRouter.post("/:courseId/sendemail/invitation/:userId", JWTAuthMiddleware,
 // coursesRouter.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
 //     const id = req.params.id
-//     const course = await CourseModel.findById(id).populate("users")
+//     const course = await courseModel.findById(id).populate("users")
 //     if (course) {
 //       res.send(course)
 //     } else {
