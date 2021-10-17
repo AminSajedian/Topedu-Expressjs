@@ -1,5 +1,19 @@
 {
   "name": "topedu-expressjs",
+  "author": "Mohammadamin Sajedian",
+  "keywords": [
+    "LMS",
+    "Learning Management System",
+    "Institution",
+    "Course",
+    "Flow",
+    "Activity",
+    "Activity's content",
+    "Admin",
+    "Instructor",
+    "Assistant",
+    "Learner"
+  ],
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
@@ -8,8 +22,6 @@
     "dev": "nodemon -r dotenv/config ./src/server.js",
     "start": "node ./src/server.js"
   },
-  "keywords": [],
-  "author": "Mohammadamin Sajedian",
   "license": "ISC",
   "dependencies": {
     "@sendgrid/mail": "^7.4.7",
