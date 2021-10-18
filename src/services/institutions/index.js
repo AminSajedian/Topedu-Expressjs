@@ -220,26 +220,10 @@ institutionsRouter.post("/:institutionId/email/invitation/:userId", JWTAuthMiddl
 institutionsRouter.get("/:institutionId/pendingUser/:pendingUserId", async (req, res, next) => {
   try {
     const institution = await institutionModel.findById(req.params.institutionId)
-    const userType = await institutionModel.getpendingUserType(req.params.institutionId, req.params.pendingUserId)
+    const userType = await institutionModel.getPendingUserType(req.params.institutionId, req.params.pendingUserId)
     if (institution) {
-      const user = await institutionModel.getpendingUser(req.params.institutionId, req.params.pendingUserId, userType)
+      const user = await institutionModel.getPendingUser(req.params.institutionId, req.params.pendingUserId, userType)
       res.status(200).send(user);
-      // switch (userType) {
-      //   case "learner":
-      //     const learner = await institutionModel.findOne({ "institution.pendingUsers.learners._id": req.params.pendingUserId })
-      //     console.log('-----------------------')
-      //     console.log('learner:', learner)
-      //     res.status(200).send(learner);
-      //     break;
-      //   case "assistant":
-      //     const assistant = await institutionModel.findOne({ "institution.pendingUsers.assistants": req.params.pendingUserId })
-      //     res.status(200).send(assistant); break;
-      //     break;
-      //   case "instructor":
-      //     const instructor = await institutionModel.findOne({ "institution.pendingUsers.instructors": req.params.pendingUserId })
-      //     res.status(200).send(instructor); break;
-      //   default: next(createError(404, `user ${req.params.pendingUserId} not found in this institution ${req.params.institutionId}`))
-      // }
     } else {
       next(createError(404, `institution ${req.params.institutionId} not found`))
     }
@@ -253,35 +237,32 @@ institutionsRouter.get("/:institutionId/pendingUser/:pendingUserId", async (req,
 institutionsRouter.post("/:institutionId/join/:pendingUserId", async (req, res, next) => {
   try {
     let institution = await institutionModel.findById(req.params.institutionId)
-    const userType = await institutionModel.getpendingUserType(req.params.institutionId, req.params.pendingUserId)
+    const userType = await institutionModel.getPendingUserType(req.params.institutionId, req.params.pendingUserId)
     if (institution) {
-      const newinstitution = await institutionModel.deletependingUser(req.params.institutionId, req.params.pendingUserId, userType)
-      const institution = await institutionModel.findOne({ institutions: req.params.institutionId })
+      const newInstitution = await institutionModel.deletePendingUser(req.params.institutionId, req.params.pendingUserId, userType)
       console.log('institution:', institution)
       switch (userType) {
         case "learner":
           const learner = new UserModel(req.body);
           const newLearner = await learner.save();
-          institution.participants.learners.push(newLearner._id)
-          newinstitution.participants.learners.push(newLearner._id)
-          institution = newinstitution
-          await institution.save();
+          newInstitution.participants.learners.push(newLearner._id)
+          institution = newInstitution
           await institution.save();
           res.status(201).send(newLearner)
           break;
         case "instructor":
           const instructor = new UserModel(req.body);
           const newInstructor = await instructor.save();
-          institution.participants.instructors.push(newInstructor._id)
-          newinstitution.participants.instructors.push(newInstructor._id)
+          newInstitution.participants.instructors.push(newInstructor._id)
+          institution = newInstitution
           await institution.save();
           res.status(201).send(newInstructor)
           break;
         case "assistant":
           const assistant = new UserModel(req.body);
           const newAssistant = await assistant.save();
-          institution.participants.assistants.push(newAssistant._id)
-          newinstitution.participants.assistants.push(newAssistant._id)
+          newInstitution.participants.assistants.push(newAssistant._id)
+          institution = newInstitution
           await institution.save();
           res.status(201).send(newAssistant)
           break;

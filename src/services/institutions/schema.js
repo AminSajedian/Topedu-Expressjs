@@ -37,47 +37,47 @@ InstitutionSchema.statics.userType = async function (institutionId, userId) {
   }
 }
 
-InstitutionSchema.statics.getPendingUserType = async function (courseId, userId) {
-  const course = await this.findById(courseId)
-  if (course) {
-    if (course.pendingUsers.instructors.find(instructor => instructor._id.toString() === userId.toString())) return "instructor"
-    if (course.pendingUsers.assistants.find(assistant => assistant._id.toString() === userId.toString())) return "assistant"
-    if (course.pendingUsers.learners.find(learner => learner._id.toString() === userId.toString())) return "learner"
+InstitutionSchema.statics.getPendingUserType = async function (institutionId, userId) {
+  const institution = await this.findById(institutionId)
+  if (institution) {
+    if (institution.pendingUsers.instructors.find(instructor => instructor._id.toString() === userId.toString())) return "instructor"
+    if (institution.pendingUsers.assistants.find(assistant => assistant._id.toString() === userId.toString())) return "assistant"
+    if (institution.pendingUsers.learners.find(learner => learner._id.toString() === userId.toString())) return "learner"
     else return null
   } else {
     return "not found"
   }
 }
 
-InstitutionSchema.statics.getPendingUser = async function (courseId, userId, userType) {
-  const course = await this.findById(courseId)
-  if (userType === "learner") { const learner = course.pendingUsers.learners.find(learner => learner._id.toString() === userId.toString()); return learner; }
-  if (userType === "assistant") { const assistant = course.pendingUsers.assistants.find(assistant => assistant._id.toString() === userId.toString()); return assistant; }
-  if (userType === "instructor") { const instructor = course.pendingUsers.instructors.find(instructor => instructor._id.toString() === userId.toString()); return instructor; }
+InstitutionSchema.statics.getPendingUser = async function (institutionId, userId, userType) {
+  const institution = await this.findById(institutionId)
+  if (userType === "learner") { const learner = institution.pendingUsers.learners.find(learner => learner._id.toString() === userId.toString()); return learner; }
+  if (userType === "assistant") { const assistant = institution.pendingUsers.assistants.find(assistant => assistant._id.toString() === userId.toString()); return assistant; }
+  if (userType === "instructor") { const instructor = institution.pendingUsers.instructors.find(instructor => instructor._id.toString() === userId.toString()); return instructor; }
   else {
     return "not found"
   }
 }
 
-InstitutionSchema.statics.deletePendingUser = async function (courseId, userId, userType) {
-  const course = await this.findById(courseId)
+InstitutionSchema.statics.deletePendingUser = async function (institutionId, userId, userType) {
+  const institution = await this.findById(institutionId)
   if (userType === "learner") {
-    const newNotEnrolledLearners = course.pendingUsers.learners.filter((learner, index) => learner._id.toString() !== userId.toString())
-    course.pendingUsers.learners = newNotEnrolledLearners
-    await course.save();
-    return course
+    const newNotEnrolledLearners = institution.pendingUsers.learners.filter((learner, index) => learner._id.toString() !== userId.toString())
+    institution.pendingUsers.learners = newNotEnrolledLearners
+    await institution.save();
+    return institution
   }
   if (userType === "assistant") {
-    const newNotEnrolledAssistants = course.pendingUsers.assistants.filter((assistant, index) => assistant._id.toString() !== userId.toString())
-    course.pendingUsers.assistants = newNotEnrolledAssistants
-    await course.save();
-    return course
+    const newNotEnrolledAssistants = institution.pendingUsers.assistants.filter((assistant, index) => assistant._id.toString() !== userId.toString())
+    institution.pendingUsers.assistants = newNotEnrolledAssistants
+    await institution.save();
+    return institution
   }
   if (userType === "instructor") {
-    const newNotEnrolledInstructors = course.pendingUsers.instructors.filter((instructor, index) => instructor._id.toString() !== userId.toString())
-    course.pendingUsers.instructors = newNotEnrolledInstructors
-    await course.save();
-    return course
+    const newNotEnrolledInstructors = institution.pendingUsers.instructors.filter((instructor, index) => instructor._id.toString() !== userId.toString())
+    institution.pendingUsers.instructors = newNotEnrolledInstructors
+    await institution.save();
+    return institution
   }
   else {
     return "not found"

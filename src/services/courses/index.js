@@ -196,22 +196,6 @@ coursesRouter.get("/:courseId/notEnrolledUser/:notEnrolledUserId", async (req, r
     if (course) {
       const user = await courseModel.getNotEnrolledUser(req.params.courseId, req.params.notEnrolledUserId, userType)
       res.status(200).send(user);
-      // switch (userType) {
-      //   case "learner":
-      //     const learner = await courseModel.findOne({ "course.notEnrolledUsers.learners._id": req.params.notEnrolledUserId })
-      //     console.log('-----------------------')
-      //     console.log('learner:', learner)
-      //     res.status(200).send(learner);
-      //     break;
-      //   case "assistant":
-      //     const assistant = await courseModel.findOne({ "course.notEnrolledUsers.assistants": req.params.notEnrolledUserId })
-      //     res.status(200).send(assistant); break;
-      //     break;
-      //   case "instructor":
-      //     const instructor = await courseModel.findOne({ "course.notEnrolledUsers.instructors": req.params.notEnrolledUserId })
-      //     res.status(200).send(instructor); break;
-      //   default: next(createError(404, `user ${req.params.notEnrolledUserId} not found in this course ${req.params.courseId}`))
-      // }
     } else {
       next(createError(404, `course ${req.params.courseId} not found`))
     }
