@@ -1,3 +1,4 @@
+import sgMail from '@sendgrid/mail'
 import express from "express"
 import createError from "http-errors"
 import { JWTAuthMiddleware } from '../../auth/middlewares.js'
@@ -5,8 +6,10 @@ import { adminOnly } from '../../auth/admin.js'
 import institutionModel from "./schema.js"
 import UserModel from "../users/schema.js"
 
-const institutionsRouter = express.Router()
+sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+const FrontendURL = process.env.FRONTEND_CLOUD_URL || FRONTEND_LOCAL_URL
 
+const institutionsRouter = express.Router()
 
 institutionsRouter.post("/me", JWTAuthMiddleware, async (req, res, next) => {
   try {
@@ -174,10 +177,10 @@ institutionsRouter.post("/:institutionId/email/invitation/:userId", JWTAuthMiddl
         // send email that user added to the institution
         const msg1 = {
           to: user.email,
-          from: 'mohammadsajedian@gmail.com', // Use the email address or domain you verified above
+          from: 'mohammadsajedian@gmail.com',
           subject: 'TopEdu institution Notification',
-          text: `Hello, You have been added to the ${institution.title} coures`,
-          html: `<strong>Hello, You have been added to the ${institution.title} coures</strong>`,
+          text: `Hello, You have been added to the ${institution.name} institution`,
+          html: `<div>Hello, You have been added to the <strong>${institution.name}</strong> institution</div>`,
         };
         // Send Email
         try {
@@ -190,10 +193,10 @@ institutionsRouter.post("/:institutionId/email/invitation/:userId", JWTAuthMiddl
         // send email that user invited to the institution
         const msg2 = {
           to: req.body.email,
-          from: 'mohammadsajedian@gmail.com', // Use the email address or domain you verified above
+          from: 'mohammadsajedian@gmail.com',
           subject: 'TopEdu institution Invitation',
-          text: `Hello, You have been invited to the ${institution.title} coures use this link to join the institution ${FrontendURL}/join/institution/${institution._id}/${req.params.userId}`,
-          html: `Hello, You have been invited to the <strong>${institution.title}</strong> coures use this link to join the institution in TopEdu: ${FrontendURL}/join/institution/${institution._id}/${req.params.userId}`,
+          text: `Hello, You have been invited to the ${institution.name} institution use this link to join the institution ${FrontendURL}/join/institution/${institution._id}/${req.params.userId}`,
+          html: `<div>Hello, You have been invited to the <strong>${institution.name}</strong> institution use this link to join the institution in TopEdu: <a href="${FrontendURL}/join/institution/${institution._id}/${req.params.userId}">${FrontendURL}/join/institution/${institution._id}/${req.params.userId}</a></div>`,
         };
         // Send Email
         try {
