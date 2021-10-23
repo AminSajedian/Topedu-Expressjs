@@ -7,7 +7,7 @@ import institutionModel from "./schema.js"
 import UserModel from "../users/schema.js"
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-const FrontendURL = process.env.FRONTEND_CLOUD_URL || FRONTEND_LOCAL_URL
+const FrontendURL = process.env.FRONTEND_CLOUD_URL || process.env.FRONTEND_LOCAL_URL
 
 const institutionsRouter = express.Router()
 
