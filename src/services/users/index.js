@@ -3,8 +3,8 @@ import UserModel from "./schema.js"
 import { JWTAuthMiddleware } from '../../auth/middlewares.js'
 import { adminOnly } from '../../auth/admin.js'
 import { JWTAuthenticate, refreshTokens } from "../../auth/tools.js"
-
 import createError from "http-errors"
+import sgMail from '@sendgrid/mail'
 
 const usersRouter = express.Router()
 
@@ -68,6 +68,8 @@ usersRouter.post("/refreshToken", async (req, res, next) => {
   }
 })
 
+
+
 // usersRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
 //     const user = await UserModel.findById(req.user._id)
@@ -127,8 +129,31 @@ usersRouter.post("/refreshToken", async (req, res, next) => {
 //   }
 // })
 
+// ******** Send Email For personal page (mohammad.vercel.app) ************
+sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
-
-
+usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
+  try {
+    // send email that user added to the institution
+    const msg1 = {
+      to: 'mohammadsajedian@gmail.com',
+      from: 'mohammadsajedian@gmail.com',
+      subject: `${req.body.name} with ${req.body.emailAddress} email address from mohammad.vercel.app`,
+      text: `${req.body.message}`,
+      html: `<div>${req.body.message}</div>`,
+  };
+    // Send Email
+    try {
+      await sgMail.send(msg1);
+      res.status(200).send();
+    } catch (error) {
+      console.log(error);
+    }
+  }
+  catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+});
 
 export default usersRouter
