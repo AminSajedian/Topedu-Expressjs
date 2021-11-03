@@ -27,7 +27,7 @@ const loggerMiddleware = (req, res, next) => {
 server.use(loggerMiddleware)
 
 // ******** cors ************
-const whitelist = [process.env.FRONTEND_LOCAL_URL, process.env.FRONTEND_CLOUD_URL]
+const whitelist = [process.env.FRONTEND_LOCAL_URL, process.env.FRONTEND_CLOUD_URL, process.env.FRONTEND_CLOUD_URL2]
 const corsOptions = {
   origin: function (origin, next) {
     console.log("ORIGIN ", origin)
