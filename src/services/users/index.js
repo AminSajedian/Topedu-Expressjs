@@ -69,6 +69,18 @@ usersRouter.post("/refreshToken", async (req, res, next) => {
 })
 
 
+// ******** Check Connection between Frontend and Backend ************
+sgMail.setApiKey(process.env.SENDGRID_API_KEY)
+
+usersRouter.post("/checkconnection", async (req, res, next) => {
+  try {
+    res.status(200).send();
+  }
+  catch (error) {
+    console.log(error.message);
+    next(error)
+  }
+});
 
 // usersRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
 //   try {
@@ -141,7 +153,7 @@ usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
       subject: `${req.body.name} with ${req.body.emailAddress} email address from mohammad.vercel.app`,
       text: `${req.body.message}`,
       html: `<div>${req.body.message}</div>`,
-  };
+    };
     // Send Email
     try {
       await sgMail.send(msg1);
