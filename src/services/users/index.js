@@ -70,8 +70,6 @@ usersRouter.post("/refreshToken", async (req, res, next) => {
 
 
 // ******** Check Connection between Frontend and Backend ************
-sgMail.setApiKey(process.env.SENDGRID_API_KEY)
-
 usersRouter.post("/checkconnection", async (req, res, next) => {
   try {
     res.status(200).send();
