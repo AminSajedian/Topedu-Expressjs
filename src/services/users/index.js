@@ -80,65 +80,6 @@ usersRouter.post("/checkconnection", async (req, res, next) => {
   }
 });
 
-// usersRouter.get("/me", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     const user = await UserModel.findById(req.user._id)
-//     res.send(user)
-//   } catch (error) {
-//     next(error)
-//   }
-// })
-
-
-
-// usersRouter.put("/register/institution", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     console.log('req.user.institutions:', req.user.institutions)
-//     const newInstitutions = [...req.user.institutions, req.body.institutionId]
-//     req.user.institutions = newInstitutions
-
-//     const user = await UserModel.findByIdAndUpdate(req.user._id, req.user, {
-//       runValidators: true,
-//       new: true,
-//     })
-//     if (user) {
-//       res.send(user)
-//     } else {
-//       next(createError(404, `User ${req.user._id} not found`))
-//     }
-//   } catch (error) {
-//     console.log(error)
-//     next(createError(500, "An error occurred while modifying user"))
-//   }
-// })
-
-
-
-// usersRouter.delete("/me", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     await req.user.deleteOne()
-//   } catch (error) {
-//     next(error)
-//   }
-// })
-
-// usersRouter.put("/me", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     const user = await UserModel.findByIdAndUpdate(req.user._id, req.body, {
-//       runValidators: true,
-//       new: true,
-//     })
-//     if (user) {
-//       res.send(user)
-//     } else {
-//       next(createError(404, `User ${req.params.id} not found`))
-//     }
-//   } catch (error) {
-//     console.log(error)
-//     next(createError(500, "An error occurred while modifying user"))
-//   }
-// })
-
 // ******** Send Email For personal page (mohammad.vercel.app) ************
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 

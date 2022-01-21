@@ -301,48 +301,4 @@ coursesRouter.post("/:courseId/email/invitation/:userId", JWTAuthMiddleware, asy
   }
 });
 
-
-
-
-// coursesRouter.get("/", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     console.log('req.user._id:', req.user._id)
-//     const courses = await courseModel.find({ users: req.user._id.toString() }).populate("users")
-//     res.send(courses)
-//   } catch (error) {
-//     console.log(error)
-//     next(createError(500, "An error occurred while getting courses"))
-//   }
-// })
-
-// coursesRouter.get("/me/stories", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     console.log('req.user._id:', req.user._id)
-//     const courses = await courseModel.find({ users: req.user._id.toString() }).populate("users")
-//     res.send(courses)
-//   } catch (error) {
-//     console.log(error)
-//     next(createError(500, "An error occurred while getting courses"))
-//   }
-// })
-
-// coursesRouter.get("/:id", JWTAuthMiddleware, async (req, res, next) => {
-//   try {
-//     const id = req.params.id
-//     const course = await courseModel.findById(id).populate("users")
-//     if (course) {
-//       res.send(course)
-//     } else {
-//       next(createError(404, `Course ${req.params.id} not found`))
-//     }
-//   } catch (error) {
-//     console.log(error)
-//     next(createError(500, "An error occurred while getting course"))
-//   }
-// })
-
-
-
-
-
 export default coursesRouter
