@@ -13,7 +13,10 @@ cloudinary.config({
 });
 
 const storage = new CloudinaryStorage({
-  cloudinary: cloudinary,
+  cloudinary,
+  params: {
+    folder: "TopEdu",
+  },
 });
 
 export const fileUpload = multer({ storage });
