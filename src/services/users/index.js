@@ -80,7 +80,7 @@ usersRouter.post("/checkconnection", async (req, res, next) => {
   }
 });
 
-// ******** Send Email For personal page (mohammad.vercel.app) ************
+// ******** Send Email ************
 sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
