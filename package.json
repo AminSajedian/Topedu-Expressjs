@@ -16,7 +16,7 @@
   ],
   "version": "1.0.0",
   "description": "",
-  "main": "./src/server.js",
+  "main": "index.js",
   "type": "module",
   "scripts": {
     "dev": "nodemon -r dotenv/config ./src/server.js",
