@@ -85,6 +85,7 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY)
 
 usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
   try {
+    console.log("🚀 ~ sendemailforpersonalpage ~ req.body:", req.body)
     // send email that user added to the institution
     const msg1 = {
       to: 'mohammadsajedian@gmail.com',
