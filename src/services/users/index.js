@@ -89,7 +89,7 @@ usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
     const msg1 = {
       to: 'mohammadsajedian@gmail.com',
       from: 'mohammadsajedian@gmail.com',
-      subject: `Portfolio visited`,
+      subject: `Portfolio visited${req.body.name ? " by " + req.body.name: ""}${req.body.emailAddress ? " with " + req.body.emailAddress + " email": ""}`,
       text: `${req.body.message}`,
       html: `<div>${req.body.message}</div>`,
     };
