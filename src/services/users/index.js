@@ -104,6 +104,8 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
   try {
     const { name, emailAddress, message } = req.body;
+    const requesterUrl = `${req.protocol}://${req.get('host')}`;
+    console.log("Requester Server URL:", requesterUrl);
 
     if (!message) {
       return res.status(400).send({ error: "Message content is required." });
