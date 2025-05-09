@@ -104,16 +104,27 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
   try {
     const { name, emailAddress, message } = req.body;
-    const requesterUrl = `${req.protocol}://${req.get('host')}`;
-    console.log("Requester Server URL:", requesterUrl);
+    const frontendUrl = req.get("origin");
 
     if (!message) {
       return res.status(400).send({ error: "Message content is required." });
     }
 
-    const subject = name
-      ? `Message from Portfolio sent by ${name}${emailAddress ? " with " + emailAddress + " email" : ""}`
-      : "Portfolio visited";
+    let subject;
+    switch (frontendUrl) {
+      case "https://sajedian.com":
+        subject = name
+          ? `Message from Portfolio sent by ${name}${
+              emailAddress ? " with " + emailAddress + " email" : ""
+            }`
+          : "Portfolio visited";
+        break;
+      case "https://topedu.vercel.app":
+        subject = "Topedu visited";
+        break;
+      default:
+        subject = "Unknown source";
+    }
 
     const msg = {
       to: process.env.RECIPIENT_EMAIL || "mohammadsajedian@gmail.com", // Use environment variable for recipient email
