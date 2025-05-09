@@ -103,32 +103,29 @@ sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
 usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
   try {
-    // send email that user added to the institution
-    const msg1 = {
-      to: "mohammadsajedian@gmail.com",
-      from: "mohammadsajedian@gmail.com",
-      subject: `${
-        !req.body.name
-          ? "Portfolio visited"
-          : "Message from Portfolio sent by " + req.body.name
-      }${
-        !req.body.emailAddress
-          ? ""
-          : " with " + req.body.emailAddress + " email"
-      }`,
-      text: `${req.body.message}`,
-      html: `<div>${req.body.message}</div>`,
-    };
-    // Send Email
-    try {
-      await sgMail.send(msg1);
-      res.status(200).send();
-    } catch (error) {
-      console.log(error);
+    const { name, emailAddress, message } = req.body;
+
+    if (!message) {
+      return res.status(400).send({ error: "Message content is required." });
     }
+
+    const subject = name
+      ? `Message from Portfolio sent by ${name}${emailAddress ? " with " + emailAddress + " email" : ""}`
+      : "Portfolio visited";
+
+    const msg = {
+      to: process.env.RECIPIENT_EMAIL || "mohammadsajedian@gmail.com", // Use environment variable for recipient email
+      from: process.env.SENDER_EMAIL || "mohammadsajedian@gmail.com", // Use environment variable for sender email
+      subject,
+      text: message,
+      html: `<div>${message}</div>`,
+    };
+
+    await sgMail.send(msg);
+    res.status(200).send({ message: "Email sent successfully." });
   } catch (error) {
-    console.log(error.message);
-    next(error);
+    console.error("Error sending email:", error.message);
+    next(createError(500, "Failed to send email. Please try again later."));
   }
 });
 
