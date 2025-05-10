@@ -105,6 +105,7 @@ usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
   try {
     const { name, emailAddress, message } = req.body;
     const frontendUrl = req.get("origin");
+    console.log("🚀 ~ usersRouter.post ~ frontendUrl:", frontendUrl)
 
     if (!message) {
       return res.status(400).send({ error: "Message content is required." });
@@ -125,7 +126,7 @@ usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
       default:
         subject = "Unknown source";
     }
-
+    
     const msg = {
       to: process.env.RECIPIENT_EMAIL || "mohammadsajedian@gmail.com", // Use environment variable for recipient email
       from: process.env.SENDER_EMAIL || "mohammadsajedian@gmail.com", // Use environment variable for sender email
@@ -133,6 +134,8 @@ usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
       text: message,
       html: `<div>${message}</div>`,
     };
+
+    console.log("🚀 ~ usersRouter.post ~ msg:", msg)
 
     await sgMail.send(msg);
     res.status(200).send({ message: "Email sent successfully." });
