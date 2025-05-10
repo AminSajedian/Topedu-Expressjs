@@ -128,7 +128,7 @@ usersRouter.post("/sendemailforpersonalpage", async (req, res, next) => {
     }
     
     const msg = {
-      to: process.env.RECIPIENT_EMAIL || "mohammadsajedian@gmail.com", // Use environment variable for recipient email
+      to: process.env.RECIPIENT_EMAIL || "aminsajedian@gmail.com", // Use environment variable for recipient email
       from: process.env.SENDER_EMAIL || "mohammadsajedian@gmail.com", // Use environment variable for sender email
       subject,
       text: message,
